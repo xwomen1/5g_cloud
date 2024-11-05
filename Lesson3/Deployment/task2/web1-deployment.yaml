@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: ttldlinhtm/my-static-web:latest  # Sử dụng image đã build
+        image: ttldlinhtm/web1:latest  # Sử dụng image đã build
         ports:
         - containerPort: 80
 
