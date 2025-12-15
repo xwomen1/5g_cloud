@@ -1,175 +1,283 @@
-Bài Tập Triển Khai Kubernetes
-Bài 1:
-Đề bài: triển khai deployment chạy nginx (default) lên kubernetes và cho phép truy cập từ bên
-ngoài thông qua nodePort
-Output:
-• 1 deployment nginx (replicas=2 pod)
+# 🚀 KUBERNETES DEPLOYMENT EXERCISES (MINIKUBE)
 
-• 1 nodePort service trỏ tới deployment
-• thực hiên curl tới nodePort và cho ra kết quả trang web mặc định của nginx
-Nộp bài
-Sinh viên thực hiện tạo các tài nguyên và lưu lại các kết quả thực hành vào thư mục trên git
-và nộp bài bằng link git
-1.1. Tạo 2 file deployment của nginx :
- 
-Cd vào thư mục chứa các file này và chạy lệnh
+This document describes **end-to-end Kubernetes hands-on exercises** using **Minikube**, including deploying **Nginx**, **static web applications**, and an **Nginx reverse proxy for multiple services**. The content is structured clearly for learning, execution, and Git submission.
+
+---
+
+## 📌 ENVIRONMENT REQUIREMENTS
+
+* Windows
+* Docker Desktop
+* Minikube (Kubernetes running as a container – single node)
+* kubectl
+* Ngrok (to expose NodePort services to the Internet)
+
+---
+
+# 🧪 LAB 1: DEPLOY DEFAULT NGINX
+
+## 🎯 Objective
+
+* Deploy an **Nginx Deployment** (2 replicas)
+* Expose it externally using a **NodePort Service**
+* Access the default Nginx welcome page
+
+## 📤 Expected Output
+
+* 1 Nginx Deployment (replicas = 2)
+* 1 NodePort Service pointing to the deployment
+* `curl` to the NodePort returns the default Nginx web page
+
+---
+
+## 1.1. Create Deployment and Service
+
+### 📄 Resource Files
+
+* `nginx-deployment.yaml`
+* `nginx-service.yaml`
+
+### ▶️ Apply manifests
+
+```bash
 kubectl apply -f nginx-deployment.yaml
 kubectl apply -f nginx-service.yaml
-*** Em dùng Minikube và nó chạy K8s dưới dạng container  1 node thì port của container k8s sẽ ánh xạ ra localhost, NodePort ánh xạ vào service chính là port cần map ra ngoài. Nên em sẽ dùng ngrok để public web của em.
-1.2. Cài ngrok bằng cmd:
+```
+
+### ℹ️ Notes (Minikube + NodePort)
+
+* Minikube runs Kubernetes inside a container (single node).
+* NodePort is mapped to the Minikube node.
+* The Minikube node port is forwarded to `localhost`.
+* Ngrok is used to publicly expose the NodePort service.
+
+---
+
+## 1.2. Install Ngrok (Windows – CMD)
+
+```cmd
 @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+```
 
- 
- 
- 
+---
 
-Bài 2: 
-Đề bài: Triển khai deployment một ứng dụng web tĩnh lên kubernetes cho phép truy cập từ
-bên ngoài thông qua nodePort
-Output:
-• Đóng gói thành công container chứa web tĩnh
-o download 1 template tại https://www.free-css.com/free-css-templates)
-o sử dụng base image nginx
-o lưu ý cấu hình nginx trỏ tới web tĩnh (tham khảo file cấu hình mẫu đơn giản
-tại https://gist.github.com/mockra/9062657)
-• 1 deployment chạy ứng dụng web tĩnh (replicas=2)
-• 1 nodePort service trỏ tới deployment (service web 1)
-• Thực hiên curl tới nodePort và cho ra kết quả trang web tĩnh theo template
-Nộp bài
-Sinh viên thực hiện tạo các tài nguyên và lưu lại các kết quả thực hành vào thư mục trên git
-và nộp bài bằng link git
+# 🧪 LAB 2: DEPLOY STATIC WEB APPLICATION
 
-2.1. Tải Template Web Tĩnh
-•	Chọn và tải template:
-o	Truy cập Free CSS Templates.
-o	Chọn một template mà bạn thích và tải về.
-o	Giải nén template và đặt các file vào một thư mục, ví dụ my-static-web.
-2.2. Tạo Dockerfile
-•	Tạo Dockerfile trong thư mục my-static-web:
-o	Giải thích:
-	FROM nginx:latest: Sử dụng image Nginx mới nhất làm base.
-	COPY . /usr/share/nginx/html: Copy tất cả các file trong thư mục hiện tại vào thư mục web của Nginx.
-2.3. Xây dựng Image
-•	Sử dụng Minikube's Docker Daemon
-o	Thiết lập môi trường để sử dụng Docker daemon của Minikube:
-& minikube docker-env | Invoke-Expression
-o	Xây dựng image:
+## 🎯 Objective
+
+* Build a Docker image for a static website
+* Use **Nginx** as the base image
+* Deploy the app to Kubernetes
+* Expose it externally using NodePort
+
+## 📤 Expected Output
+
+* A container image successfully built with static web content
+* 1 Deployment running the static website (replicas = 2)
+* 1 NodePort Service (`web1-service`)
+* `curl` to NodePort returns the static website
+
+---
+
+## 2.1. Download Static Web Template
+
+* Visit: [https://www.free-css.com/free-css-templates](https://www.free-css.com/free-css-templates)
+* Choose any template
+* Extract files into a directory, e.g. `my-static-web`
+
+---
+
+## 2.2. Create Dockerfile
+
+Create a `Dockerfile` inside `my-static-web`:
+
+```dockerfile
+FROM nginx:latest
+COPY . /usr/share/nginx/html
+```
+
+### Explanation
+
+* `FROM nginx:latest`: Use the latest Nginx image
+* `COPY`: Copy static files into Nginx web root
+
+---
+
+## 2.3. Build Docker Image (Minikube Docker Daemon)
+
+```powershell
+minikube docker-env | Invoke-Expression
 cd my-static-web
 docker build -t my-static-web:latest .
-o	Kiểm tra image đã được tạo:
 docker images
-o	Lưu ý: Bằng cách sử dụng Docker daemon của Minikube, image sẽ có sẵn trong cluster và không cần đẩy lên registry.
-________________________________________
-2.4 Triển khai Deployment và Service
-•	Tạo file web1-deployment.yaml
-•	Tạo file web1-service.yaml
+```
 
-•	Triển khai:
+ℹ️ Using Minikube Docker daemon allows the image to be used directly without pushing to a registry.
+
+---
+
+## 2.4. Deploy Application
+
+### 📄 Create manifests
+
+* `web1-deployment.yaml`
+* `web1-service.yaml`
+
+### ▶️ Apply manifests
+
+```bash
 kubectl apply -f web1-deployment.yaml
 kubectl apply -f web1-service.yaml
-________________________________________
-2.5. Kiểm tra Ứng dụng Web Tĩnh
+```
+
+---
+
+## 2.5. Verify Static Website
+
+```bash
 minikube service web1-service
-lấy được trang web từ localhost 
- 
-Sau đó ánh xạ ra ngoài bằng ngrok
- 
+```
 
- 
-________________________________________
+* The static website should open in the browser via `localhost`.
+* Use **Ngrok** to expose the service publicly.
 
+---
 
+# 🧪 LAB 3: NGINX REVERSE PROXY FOR MULTIPLE APPLICATIONS
 
+## 🎯 Objective
 
+* Deploy a second static website (`web2`)
+* Deploy an **Nginx Proxy** in front of `web1` and `web2`
+* Route traffic based on URL path
 
-Bài 3:
-Đề bài: triển khai nginx proxy cho nhiều ứng dụng
-- từ level 2, triển khai thêm 1 trang web static thứ hai, khác với static web đã triển khai
-- service cho trang web tĩnh mới được lấy tên là web2
-- triển khai thêm 1 deployment nginx-proxy đóng vai trò proxy cho cả 2 ứng dụng trên và tạo
-nodePort service có tên "nginx-proxy“
-- thiết lập cấu hình config của nginx-proxy sao cho:
-+ khi gọi tới nginx-proxy với path /web1 > nginx-proxy filter path và forward tới service web 1 >
-service web1
-+ khi gọi tới nginx-proxy với path /web2 > nginx-proxy filter path và forward tới service web 2 >
-service web2
+## 📤 Expected Output
 
-Output:
-+ curl http://\<node-ip>:\<node-port>/web1 > trả về static web 1
-+ curl http://\<node-ip>:\<node-port>/web2 > trả về static web 2
-Nộp bài
-Sinh viên thực hiện tạo các tài nguyên và lưu lại các kết quả thực hành vào thư mục trên git
-và nộp bài bằng link git
+```text
+curl http://<node-ip>:<node-port>/web1  → returns static web 1
+curl http://<node-ip>:<node-port>/web2  → returns static web 2
+```
 
+---
 
+## 3.1. Deploy Second Static Website (Web2)
 
-________________________________________
-3.1 Triển khai Trang Web Tĩnh Thứ Hai
-3.2. Tải Template và Tạo Image
-•	Tải template mới:
-o	Truy cập Free CSS Templates và chọn một template khác.
-o	Giải nén và đặt các file vào thư mục my-static-web2.
-•	Tạo Dockerfile cho web2:
-o	Trong thư mục my-static-web2, tạo Dockerfile với nội dung:
-•	Xây dựng image cho web2:
-o	Xây dựng image:
+### Download Template
+
+* Choose a different template from Free CSS
+* Extract to `my-static-web2`
+
+### Create Dockerfile
+
+```dockerfile
+FROM nginx:latest
+COPY . /usr/share/nginx/html
+```
+
+### Build image
+
+```bash
 cd my-static-web2
 docker build -t my-static-web2:latest .
-1.2. Triển khai Deployment và Service cho Web2
-•	Tạo file web2-deployment.yaml:
-•	Triển khai Deployment:
+```
+
+---
+
+## 3.2. Deploy Web2 to Kubernetes
+
+### 📄 Manifests
+
+* `web2-deployment.yaml`
+* `web2-service.yaml`
+
+### ▶️ Apply
+
+```bash
 kubectl apply -f web2-deployment.yaml
-•	Tạo file web2-service.yaml:
-•	Triển khai Service:
 kubectl apply -f web2-service.yaml
-________________________________________
-3.3. Triển khai Nginx Proxy
-3.4. Tạo Cấu hình Nginx Proxy
-•	Tạo thư mục nginx-proxy và tạo file nginx.conf:
-nginx
-•	Giải thích:
-o	proxy_pass chuyển tiếp yêu cầu tới các Service nội bộ web1-service và web2-service.
-o	Đảm bảo rằng bạn thêm dấu / ở cuối đường dẫn để Nginx xử lý chính xác.
-3.5. Tạo Dockerfile cho Nginx Proxy
-•	Trong thư mục nginx-proxy, tạo Dockerfile:
-•	Xây dựng image cho Nginx Proxy:
+```
+
+---
+
+## 3.3. Deploy Nginx Proxy
+
+### Create Nginx configuration (`nginx.conf`)
+
+```nginx
+server {
+    listen 80;
+
+    location /web1/ {
+        proxy_pass http://web1-service/;
+    }
+
+    location /web2/ {
+        proxy_pass http://web2-service/;
+    }
+}
+```
+
+ℹ️ Ensure the trailing `/` is included for correct path handling.
+
+---
+
+## 3.4. Create Dockerfile for Nginx Proxy
+
+```dockerfile
+FROM nginx:latest
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+```
+
+### Build image
+
+```bash
 docker build -t nginx-proxy:latest .
-3.6. Triển khai Deployment và Service cho Nginx Proxy
-•	Tạo file nginx-proxy-deployment.yaml:
-•	Triển khai Deployment:
+```
+
+---
+
+## 3.5. Deploy Nginx Proxy to Kubernetes
+
+### 📄 Manifests
+
+* `nginx-proxy-deployment.yaml`
+* `nginx-proxy-service.yaml`
+
+### ▶️ Apply
+
+```bash
 kubectl apply -f nginx-proxy-deployment.yaml
-•	Tạo file nginx-proxy-service.yaml:
-•	Triển khai Service:
 kubectl apply -f nginx-proxy-service.yaml
+```
 
- 
+---
 
+# 🛠️ TROUBLESHOOTING COMMANDS
 
+```bash
+# Temporary debug pod
+kubectl run tmp-shell --rm -it --image=alpine -- sh
 
-
-________________________________________
-
- 
-
- 
-
- 
- 
- 
-
-Tài Nguyên Tham Khảo:
-•	Minikube Documentation
-•	Kubernetes Documentation
-•	Docker Desktop for Windows
-•	Nginx Official Documentation
-•	Kubernetes Services
-________________________________________
-Một số câu lệnh hỗ trợ fix bug:
-Truy cập vào pod tạm thời
-kubectl run tmp-shell --rm -it --image=alpine – sh
-truy cập vào pod:
+# Exec into a running pod
 kubectl exec -it <nginx-proxy-pod-name> -- /bin/sh
-kiểm tra config map
-kubectl describe configmap nginx-config
-nginx -T
 
+# Inspect ConfigMap
+kubectl describe configmap nginx-config
+
+# Check Nginx configuration
+nginx -T
+```
+
+---
+
+# 📚 REFERENCES
+
+* Minikube Documentation
+* Kubernetes Official Documentation
+* Docker Desktop for Windows
+* Nginx Official Documentation
+* Kubernetes Services
+
+---
+
+✅ **All manifests, Dockerfiles, and execution results must be committed to Git and submitted as a repository link.**
